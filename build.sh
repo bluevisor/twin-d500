@@ -7,7 +7,7 @@ APP=build/TwinD500.app
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-swiftc -O -swift-version 5 -o "$APP/Contents/MacOS/TwinD500" Sources/main.swift \
+swiftc -O -swift-version 5 -o "$APP/Contents/MacOS/TwinD500" Sources/*.swift \
   -framework Cocoa -framework Metal -framework QuartzCore
 cp Sources/Shaders.metal "$APP/Contents/Resources/"
 
