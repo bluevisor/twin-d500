@@ -1,0 +1,36 @@
+name: CI
+
+# Runs on the self-hosted Mac Pro 2013: this demo needs its two FirePro D500s,
+# which no hosted runner has. Fork PRs never reach it, since their code would
+# execute on that machine.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bench:
+    name: Build and bench (2x FirePro D500)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, intel-mac]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: ./build.sh
+      # Offscreen throughput per scene and GPU mode, plus split-vs-one-GPU
+      # checks (reported in the summary; the step fails only on a Metal error).
+      - name: Bench and correctness checks
+        run: build/TwinD500.app/Contents/MacOS/TwinD500 --bench "$RUNNER_TEMP/bench"
+      - name: Bench report
+        if: always()
+        run: cat "$RUNNER_TEMP/bench/bench.txt" >> "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bench
+          path: ${{ runner.temp }}/bench
